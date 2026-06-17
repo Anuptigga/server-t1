@@ -23,6 +23,8 @@ import mongoose from 'mongoose';
 
 const app = express();
 
+// Trust the first proxy (Render's load balancer) for rate limiting and IP detection
+app.set('trust proxy', 1);
 app.get('/api/v1/build-indexes', async (req, res) => {
   try {
     const Kitchen = mongoose.model('Kitchen');
@@ -39,7 +41,9 @@ app.get('/api/v1/build-indexes', async (req, res) => {
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    // Setting origin to true reflects the request origin, allowing all domains 
+    // while still supporting credentials (cookies/sessions)
+    origin: true,
     credentials: true,
   })
 );
