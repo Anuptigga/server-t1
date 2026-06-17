@@ -1,0 +1,143 @@
+import User from '../models/User.js';
+import Kitchen from '../models/Kitchen.js';
+import Order from '../models/Order.js';
+import AppError from '../utils/AppError.js';
+import { ORDER_STATUS } from '../utils/constants.js';
+
+/**
+ * Get high-level overview stats for the admin dashboard.
+ */
+export const getOverviewStats = async () => {
+  const [
+    totalUsers,
+    totalKitchens,
+    totalOrders,
+    completedOrdersCount,
+    revenueData
+  ] = await Promise.all([
+    User.countDocuments({ role: 'buyer' }),
+    Kitchen.countDocuments({ isApproved: true }),
+    Order.countDocuments(),
+    Order.countDocuments({ status: ORDER_STATUS.COMPLETED }),
+    Order.aggregate([
+      { $match: { status: ORDER_STATUS.COMPLETED } },
+      {
+        $lookup: {
+          from: 'kitchens',
+          localField: 'kitchen',
+          foreignField: '_id',
+          as: 'kitchenDoc'
+        }
+      },
+      { $unwind: '$kitchenDoc' },
+      {
+        $project: {
+          platformFee: 1,
+          commissionAmt: {
+            $divide: [
+              { $multiply: ['$subtotal', { $ifNull: ['$kitchenDoc.commission', 10] }] },
+              100
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: { $add: ['$platformFee', '$commissionAmt'] } }
+        }
+      }
+    ])
+  ]);
+
+  const totalRevenue = revenueData[0]?.totalRevenue || 0;
+
+  return {
+    users: totalUsers,
+    kitchens: totalKitchens,
+    orders: totalOrders,
+    completedOrders: completedOrdersCount,
+    platformRevenue: totalRevenue,
+  };
+};
+
+/**
+ * Get kitchens (with optional filters like pending approval).
+ */
+export const getKitchens = async ({ page = 1, limit = 10, status }) => {
+  const query = {};
+  if (status === 'pending') {
+    query.isApproved = false;
+  } else if (status === 'approved') {
+    query.isApproved = true;
+  }
+
+  const total = await Kitchen.countDocuments(query);
+  const kitchens = await Kitchen.find(query)
+    .populate('owner', 'name email phone')
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .lean();
+
+  return {
+    kitchens,
+    pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+  };
+};
+
+/**
+ * Approve or reject a kitchen.
+ */
+export const moderateKitchen = async (kitchenId, { isApproved }) => {
+  const kitchen = await Kitchen.findByIdAndUpdate(
+    kitchenId,
+    { isApproved },
+    { new: true }
+  ).populate('owner', 'name email');
+
+  if (!kitchen) throw new AppError('Kitchen not found', 404);
+
+  // You could also trigger an email notification here in a real app
+  return kitchen;
+};
+
+/**
+ * Get users (paginated).
+ */
+export const getUsers = async ({ page = 1, limit = 20, role }) => {
+  const query = {};
+  if (role) query.role = role;
+
+  const total = await User.countDocuments(query);
+  const users = await User.find(query)
+    .select('-password -otp')
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .lean();
+
+  return {
+    users,
+    pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+  };
+};
+
+/**
+ * Get all orders globally (paginated).
+ */
+export const getGlobalOrders = async ({ page = 1, limit = 20 }) => {
+  const total = await Order.countDocuments();
+  const orders = await Order.find()
+    .populate('buyer', 'name phone')
+    .populate('kitchen', 'name')
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .lean();
+
+  return {
+    orders,
+    pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+  };
+};
