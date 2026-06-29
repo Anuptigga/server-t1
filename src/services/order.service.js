@@ -4,8 +4,15 @@ import Kitchen from '../models/Kitchen.js';
 import AppError from '../utils/AppError.js';
 import { ORDER_STATUS, PAYMENT_STATUS, PLATFORM_CONFIG } from '../utils/constants.js';
 import { decrementQuantity, incrementQuantity } from './food.service.js';
-import { createPaymentOrder, verifyPayment } from './payment.service.js';
+import {
+  createPaymentOrder,
+  verifyPaymentSignature,
+  fetchPayment,
+  capturePayment,
+  createRefund,
+} from './payment.service.js';
 import { geocodeAddress } from './geocoding.service.js';
+import { settleOrderEarnings } from './wallet.service.js';
 
 // Calculate distance in km using Haversine formula
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -137,11 +144,26 @@ export const placeOrder = async (buyerId, data) => {
     },
   });
 
-  // Create Razorpay order
-  const paymentOrder = await createPaymentOrder(total * 100, order.orderNumber || 'temp');
-
-  order.payment.razorpayOrderId = paymentOrder.id;
+  // Save first so the generated order number is a stable Razorpay receipt.
   await order.save();
+
+  let paymentOrder;
+  try {
+    paymentOrder = await createPaymentOrder(
+      total * 100,
+      order.orderNumber,
+      { local_order_id: order._id.toString() }
+    );
+    order.payment.razorpayOrderId = paymentOrder.id;
+    await order.save();
+  } catch (error) {
+    // Do not leave stock reserved when payment initialization fails.
+    for (const item of orderItems) {
+      await incrementQuantity(item.food, item.quantity);
+    }
+    await Order.findByIdAndDelete(order._id);
+    throw error;
+  }
 
   return {
     order,
@@ -156,15 +178,18 @@ export const placeOrder = async (buyerId, data) => {
 /**
  * Verify payment after Razorpay checkout.
  */
-export const verifyOrderPayment = async (orderId, paymentId, signature) => {
+export const verifyOrderPayment = async (orderId, buyerId, paymentId, signature) => {
   const order = await Order.findById(orderId);
   if (!order) throw new AppError('Order not found.', 404);
+  if (order.buyer.toString() !== buyerId.toString()) {
+    throw new AppError('Unauthorized.', 403);
+  }
 
   if (order.payment.status === PAYMENT_STATUS.COMPLETED) {
     return order; // Already verified
   }
 
-  const isValid = await verifyPayment(
+  const isValid = verifyPaymentSignature(
     order.payment.razorpayOrderId,
     paymentId,
     signature
@@ -172,6 +197,43 @@ export const verifyOrderPayment = async (orderId, paymentId, signature) => {
 
   if (!isValid) {
     throw new AppError('Payment verification failed.', 400);
+  }
+
+  let payment = await fetchPayment(paymentId);
+  if (
+    payment.order_id !== order.payment.razorpayOrderId ||
+    payment.amount !== Math.round(order.total * 100) ||
+    payment.currency !== 'INR'
+  ) {
+    throw new AppError('Payment details do not match this order.', 400);
+  }
+
+  if (payment.status === 'authorized') {
+    payment = await capturePayment(paymentId, Math.round(order.total * 100));
+  }
+
+  if (payment.status !== 'captured') {
+    throw new AppError('Payment has not been captured.', 409);
+  }
+
+  if (order.status === ORDER_STATUS.CANCELLED) {
+    const refund = await createRefund(
+      paymentId,
+      Math.round(order.total * 100),
+      `refund_${order.orderNumber}`
+    );
+    order.payment.razorpayPaymentId = paymentId;
+    order.payment.razorpayRefundId = refund.id;
+    order.payment.refundStatus = refund.status;
+    order.payment.status =
+      refund.status === 'processed'
+        ? PAYMENT_STATUS.REFUNDED
+        : PAYMENT_STATUS.REFUND_PENDING;
+    await order.save();
+    throw new AppError(
+      'This order was cancelled. Your payment is being refunded.',
+      409
+    );
   }
 
   order.payment.status = PAYMENT_STATUS.COMPLETED;
@@ -188,6 +250,12 @@ export const verifyOrderPayment = async (orderId, paymentId, signature) => {
 export const updateOrderStatus = async (orderId, newStatus, userId, note) => {
   const order = await Order.findById(orderId).populate('kitchen');
   if (!order) throw new AppError('Order not found.', 404);
+  if (order.kitchen.owner.toString() !== userId.toString()) {
+    throw new AppError('Unauthorized.', 403);
+  }
+  if (order.payment.status !== PAYMENT_STATUS.COMPLETED) {
+    throw new AppError('This order has not been paid.', 409);
+  }
 
   // Validate transition
   const allowed = VALID_TRANSITIONS[order.status];
@@ -217,6 +285,9 @@ export const updateOrderStatus = async (orderId, newStatus, userId, note) => {
   if (note) order.kitchenNote = note;
 
   await order.save();
+  if (newStatus === ORDER_STATUS.COMPLETED) {
+    await settleOrderEarnings(order);
+  }
   return order;
 };
 
@@ -249,7 +320,26 @@ export const cancelOrder = async (orderId, userId, role, reason) => {
     throw new AppError('Unauthorized.', 403);
   }
 
-  // Restore quantities
+  // Initiate the real refund before reporting the order as cancelled.
+  if (order.payment.status === PAYMENT_STATUS.COMPLETED) {
+    if (!order.payment.razorpayPaymentId) {
+      throw new AppError('Paid order is missing its payment reference.', 409);
+    }
+
+    const refund = await createRefund(
+      order.payment.razorpayPaymentId,
+      Math.round(order.total * 100),
+      `refund_${order.orderNumber}`
+    );
+    order.payment.razorpayRefundId = refund.id;
+    order.payment.refundStatus = refund.status;
+    order.payment.status =
+      refund.status === 'processed'
+        ? PAYMENT_STATUS.REFUNDED
+        : PAYMENT_STATUS.REFUND_PENDING;
+  }
+
+  // Restore quantities only after cancellation/refund initiation succeeds.
   for (const item of order.items) {
     await incrementQuantity(item.food, item.quantity);
   }
@@ -258,11 +348,6 @@ export const cancelOrder = async (orderId, userId, role, reason) => {
   order.cancelledAt = new Date();
   order.cancelReason = reason || '';
   order.cancelledBy = isBuyer ? 'buyer' : role;
-
-  // Mark payment as refunded (if was paid)
-  if (order.payment.status === PAYMENT_STATUS.COMPLETED) {
-    order.payment.status = PAYMENT_STATUS.REFUNDED;
-  }
 
   await order.save();
   return order;

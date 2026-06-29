@@ -44,7 +44,11 @@ router.post(
 router.get('/:id', orderController.getOrderById);
 
 // Verify payment
-router.post('/:id/verify-payment', orderController.verifyPayment);
+router.post(
+  '/:id/verify-payment',
+  authorize('buyer'),
+  orderController.verifyPayment
+);
 
 // Kitchen: update status
 router.patch(

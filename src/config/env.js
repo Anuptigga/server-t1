@@ -29,6 +29,10 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional().default(''),
   RAZORPAY_KEY_SECRET: z.string().optional().default(''),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional().default(''),
+  RAZORPAYX_KEY_ID: z.string().optional().default(''),
+  RAZORPAYX_KEY_SECRET: z.string().optional().default(''),
+  RAZORPAYX_ACCOUNT_NUMBER: z.string().optional().default(''),
+  RAZORPAYX_PAYOUT_MODE: z.enum(['IMPS', 'NEFT', 'RTGS']).default('IMPS'),
 
   // Google Maps (optional in dev)
   GOOGLE_MAPS_API_KEY: z.string().optional().default(''),

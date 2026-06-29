@@ -64,6 +64,11 @@ const userSchema = new mongoose.Schema(
       ifscCode: { type: String, trim: true, uppercase: true, default: '' },
       bankName: { type: String, trim: true, default: '' },
     },
+    payoutProfile: {
+      razorpayContactId: { type: String, default: '' },
+      razorpayFundAccountId: { type: String, default: '' },
+      bankFingerprint: { type: String, default: '' },
+    },
     location: {
       type: {
         type: String,

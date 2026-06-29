@@ -84,6 +84,8 @@ const orderSchema = new mongoose.Schema(
       },
       razorpayOrderId: String,
       razorpayPaymentId: String,
+      razorpayRefundId: String,
+      refundStatus: String,
       paidAt: Date,
     },
     // Delivery

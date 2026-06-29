@@ -72,6 +72,11 @@ export const updateBankDetails = asyncHandler(async (req, res) => {
         ifscCode,
         bankName,
       },
+      payoutProfile: {
+        razorpayContactId: req.user.payoutProfile?.razorpayContactId || '',
+        razorpayFundAccountId: '',
+        bankFingerprint: '',
+      },
     },
     { new: true, runValidators: true }
   ).select('-password -otp -__v');

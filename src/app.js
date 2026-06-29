@@ -19,6 +19,7 @@ import deliveryRoutes from './routes/delivery.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import { handleRazorpayWebhook } from './controllers/webhook.controller.js';
 import mongoose from 'mongoose';
 
 const app = express();
@@ -46,6 +47,13 @@ app.use(
     origin: true,
     credentials: true,
   })
+);
+
+// Razorpay signatures must be verified against the untouched request bytes.
+app.post(
+  '/api/v1/webhooks/razorpay',
+  express.raw({ type: 'application/json', limit: '1mb' }),
+  handleRazorpayWebhook
 );
 
 // ====================================

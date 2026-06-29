@@ -3,6 +3,7 @@ import Order from '../models/Order.js';
 import Kitchen from '../models/Kitchen.js';
 import AppError from '../utils/AppError.js';
 import { ORDER_STATUS } from '../utils/constants.js';
+import { settleOrderEarnings } from './wallet.service.js';
 
 /**
  * Toggle delivery partner availability.
@@ -133,39 +134,7 @@ export const markDelivered = async (userId, orderId, otp) => {
   order.completedAt = new Date();
   await order.save();
 
-  // Handle wallet crediting for Kitchen and Delivery Partner
-  try {
-    const { creditEarnings } = await import('./wallet.service.js');
-    const kitchen = await Kitchen.findById(order.kitchen);
-    
-    if (kitchen) {
-      // Calculate kitchen earnings (Subtotal - Commission)
-      const commissionAmount = (order.subtotal * (kitchen.commission || 10)) / 100;
-      const kitchenEarnings = order.subtotal - commissionAmount;
-
-      await creditEarnings(
-        kitchen.owner,
-        kitchenEarnings,
-        'order_earnings',
-        `Earnings for order #${order.orderNumber}`,
-        order._id,
-        kitchen._id
-      );
-    }
-
-    // Delivery partner earnings
-    await creditEarnings(
-      userId,
-      order.deliveryFee || 30, // Fallback to 30 if undefined
-      'delivery_earnings',
-      `Earnings for delivering order #${order.orderNumber}`,
-      order._id
-    );
-  } catch (err) {
-    console.error('Failed to credit wallets:', err);
-    // Continue even if crediting fails for MVP purposes, 
-    // in prod we'd want a transaction or retry queue
-  }
+  await settleOrderEarnings(order);
 
   return order;
 };

@@ -14,17 +14,6 @@ export const placeOrder = asyncHandler(async (req, res) => {
     req.body
   );
 
-  // Emit socket event to kitchen
-  const io = req.app.get('io');
-  if (io) {
-    io.to(`kitchen:${order.kitchen}`).emit('order:new', {
-      orderId: order._id,
-      orderNumber: order.orderNumber,
-      total: order.total,
-      itemCount: order.items.length,
-    });
-  }
-
   res.status(201).json({
     status: 'success',
     message: 'Order placed successfully.',
@@ -47,9 +36,20 @@ export const verifyPayment = asyncHandler(async (req, res) => {
 
   const order = await orderService.verifyOrderPayment(
     req.params.id,
+    req.user._id,
     paymentId,
     signature
   );
+
+  const io = req.app.get('io');
+  if (io) {
+    io.to(`kitchen:${order.kitchen}`).emit('order:new', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      total: order.total,
+      itemCount: order.items.length,
+    });
+  }
 
   res.status(200).json({
     status: 'success',

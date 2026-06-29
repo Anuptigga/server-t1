@@ -26,6 +26,7 @@ export const PAYMENT_STATUS = {
   PENDING: 'pending',
   COMPLETED: 'completed',
   FAILED: 'failed',
+  REFUND_PENDING: 'refund_pending',
   REFUNDED: 'refunded',
 };
 

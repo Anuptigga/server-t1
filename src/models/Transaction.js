@@ -44,6 +44,18 @@ const transactionSchema = new mongoose.Schema(
     referenceId: {
       type: String, // E.g., payment gateway transaction ID
     },
+    idempotencyKey: {
+      type: String,
+    },
+    providerStatus: {
+      type: String,
+      default: '',
+    },
+    failureReason: {
+      type: String,
+      default: '',
+    },
+    completedAt: Date,
   },
   {
     timestamps: true,
@@ -53,6 +65,8 @@ const transactionSchema = new mongoose.Schema(
 // Index for getting a user's/kitchen's transactions efficiently sorted by latest
 transactionSchema.index({ user: 1, createdAt: -1 });
 transactionSchema.index({ kitchen: 1, createdAt: -1 });
+transactionSchema.index({ referenceId: 1 }, { unique: true, sparse: true });
+transactionSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 
