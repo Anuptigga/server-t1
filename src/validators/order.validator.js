@@ -11,9 +11,9 @@ export const placeOrderSchema = z.object({
     )
     .min(1, 'Order must have at least one item'),
   deliveryAddress: z.object({
-    street: z.string().min(1).optional().default(''),
-    city: z.string().min(1).optional().default(''),
-    state: z.string().min(1).optional().default(''),
+    street: z.string().optional().default(''),
+    city: z.string().optional().default(''),
+    state: z.string().optional().default(''),
     pincode: z.string().optional().default(''),
     latitude: z.coerce.number().optional(),
     longitude: z.coerce.number().optional(),
