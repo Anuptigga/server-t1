@@ -14,7 +14,7 @@ export const signup = asyncHandler(async (req, res) => {
   res.status(201).json({
     status: 'success',
     message: 'Account created successfully',
-    data: { user },
+    data: { user, token },
   });
 });
 
@@ -30,7 +30,7 @@ export const login = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Logged in successfully',
-    data: { user },
+    data: { user, token },
   });
 });
 
@@ -72,7 +72,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'OTP verified successfully',
-    data: { user },
+    data: { user, token },
   });
 });
 

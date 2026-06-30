@@ -5,11 +5,24 @@ import asyncHandler from '../utils/asyncHandler.js';
 import env from '../config/env.js';
 
 /**
- * Protect routes — verifies JWT from HTTP-only cookie.
+ * Protect routes — verifies JWT from Authorization header or HTTP-only cookie.
+ * Checks Bearer token first (needed for cross-origin deployments), then falls
+ * back to the HTTP-only cookie (works for same-origin / local dev with proxy).
  * Attaches the authenticated user to `req.user`.
  */
 const protect = asyncHandler(async (req, res, next) => {
-  const token = req.cookies?.token;
+  let token;
+
+  // 1. Check Authorization header (Bearer token) — works cross-origin
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
+
+  // 2. Fallback to HTTP-only cookie — works same-origin / local dev
+  if (!token) {
+    token = req.cookies?.token;
+  }
 
   if (!token) {
     throw new AppError('Not authenticated. Please log in.', 401);
