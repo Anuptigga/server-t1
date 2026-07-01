@@ -82,6 +82,15 @@ export const updateStatus = asyncHandler(async (req, res) => {
       status: order.status,
       orderNumber: order.orderNumber,
     });
+
+    // Notify online delivery partners when an order is ready for pickup
+    if (order.status === 'ready' && order.deliveryType === 'delivery') {
+      io.to('delivery:available').emit('order:ready-for-pickup', {
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        kitchenId: order.kitchen,
+      });
+    }
   }
 
   res.status(200).json({

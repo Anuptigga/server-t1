@@ -44,27 +44,6 @@ router.patch(
   kitchenController.toggleStatus
 );
 
-// Admin routes
-router.get(
-  '/',
-  protect,
-  authorize('admin'),
-  kitchenController.getAllKitchens
-);
-
-router.patch(
-  '/:id/approve',
-  protect,
-  authorize('admin'),
-  kitchenController.approveKitchen
-);
-
-router.patch(
-  '/:id/reject',
-  protect,
-  authorize('admin'),
-  kitchenController.rejectKitchen
-);
 
 // Public
 router.get('/:id', kitchenController.getKitchenById);

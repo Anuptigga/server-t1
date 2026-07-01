@@ -156,46 +156,4 @@ export const getNearbyKitchens = async ({ longitude, latitude, radius }) => {
   return kitchens;
 };
 
-/**
- * Get all kitchens (admin).
- */
-export const getAllKitchens = async ({ page = 1, limit = 20, status }) => {
-  const query = {};
 
-  if (status === 'approved') query.isApproved = true;
-  if (status === 'pending') query.isApproved = false;
-
-  const total = await Kitchen.countDocuments(query);
-  const kitchens = await Kitchen.find(query)
-    .populate('owner', 'name email phone')
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .lean();
-
-  return {
-    kitchens,
-    pagination: {
-      total,
-      page,
-      limit,
-      pages: Math.ceil(total / limit),
-    },
-  };
-};
-
-/**
- * Approve or reject a kitchen (admin).
- */
-export const updateKitchenApproval = async (kitchenId, isApproved) => {
-  const kitchen = await Kitchen.findById(kitchenId);
-
-  if (!kitchen) {
-    throw new AppError('Kitchen not found.', 404);
-  }
-
-  kitchen.isApproved = isApproved;
-  await kitchen.save();
-
-  return kitchen;
-};
