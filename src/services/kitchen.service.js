@@ -19,24 +19,22 @@ export const registerKitchen = async (userId, data) => {
     throw new AppError('Only kitchen accounts can register a kitchen.', 403);
   }
 
-  // Determine coordinates
-  let coordinates;
-  if (data.latitude && data.longitude) {
-    coordinates = [data.longitude, data.latitude]; // GeoJSON: [lng, lat]
-  } else {
-    // Geocode from address
-    coordinates = await geocodeAddress(data.address);
-  }
+  // Coordinates are now strictly required by validation
+  const coordinates = [data.longitude, data.latitude]; // GeoJSON: [lng, lat]
 
   const kitchen = await Kitchen.create({
     owner: userId,
     name: data.name,
     description: data.description || '',
     phone: data.phone,
+    coverImage: data.coverImage || '',
     address: data.address,
     location: {
       type: 'Point',
       coordinates,
+    },
+    kycDetails: {
+      documentUrl: data.kycDocumentUrl,
     },
     operatingHours: data.operatingHours || { open: '09:00', close: '21:00' },
     cuisineTypes: data.cuisineTypes || [],

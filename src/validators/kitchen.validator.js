@@ -23,9 +23,11 @@ export const registerKitchenSchema = z.object({
       .string({ required_error: 'Pincode is required' })
       .regex(/^\d{6}$/, 'Pincode must be 6 digits'),
   }),
-  // Location can be provided directly or geocoded from address
-  latitude: z.coerce.number().min(-90).max(90).optional(),
-  longitude: z.coerce.number().min(-180).max(180).optional(),
+  // Location is strictly required via GPS capture during onboarding
+  latitude: z.coerce.number({ required_error: 'Exact GPS location is required' }).min(-90).max(90),
+  longitude: z.coerce.number({ required_error: 'Exact GPS location is required' }).min(-180).max(180),
+  coverImage: z.string().url('Cover image must be a valid URL').optional().or(z.literal('')),
+  kycDocumentUrl: z.string({ required_error: 'KYC Document is required' }).url('KYC document must be a valid URL'),
   operatingHours: z
     .object({
       open: z.string().regex(/^\d{2}:\d{2}$/, 'Use HH:MM format').optional(),

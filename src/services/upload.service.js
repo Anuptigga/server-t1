@@ -41,6 +41,40 @@ export const uploadImage = async (buffer, { folder = 'rajabhoj' } = {}) => {
 };
 
 /**
+ * Upload a single document buffer (PDF) to Cloudinary.
+ * @param {Buffer} buffer - Document file buffer from multer
+ * @param {Object} options
+ * @param {string} options.folder - Cloudinary folder
+ * @returns {Promise<{ url: string, publicId: string }>}
+ */
+export const uploadDocumentFile = async (buffer, { folder = 'rajabhoj/documents' } = {}) => {
+  const cloudinary = await getCloudinary();
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: 'auto', // Important: 'auto' or 'raw' for PDFs
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+
+      uploadStream.end(buffer);
+    });
+
+    logger.info(`Document uploaded: ${result.secure_url}`);
+    return { url: result.secure_url, publicId: result.public_id };
+  } catch (error) {
+    logger.error(`Upload failed: ${error.message}`);
+    throw new AppError('Document upload failed. Please try again.', 500);
+  }
+};
+
+/**
  * Delete an image from Cloudinary.
  */
 export const deleteImage = async (publicId) => {

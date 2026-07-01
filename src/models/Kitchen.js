@@ -1,27 +1,6 @@
 import mongoose from 'mongoose';
 import { KYC_STATUS, PLATFORM_CONFIG } from '../utils/constants.js';
 
-const kycDocumentSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: ['fssai', 'aadhaar', 'pan', 'other'],
-      required: true,
-    },
-    url: {
-      type: String,
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: Object.values(KYC_STATUS),
-      default: KYC_STATUS.PENDING,
-    },
-    rejectionReason: String,
-  },
-  { _id: false }
-);
-
 const kitchenSchema = new mongoose.Schema(
   {
     owner: {
@@ -72,9 +51,17 @@ const kitchenSchema = new mongoose.Schema(
         required: true,
       },
     },
-    kycDocuments: {
-      type: [kycDocumentSchema],
-      default: [],
+    kycDetails: {
+      documentUrl: {
+        type: String,
+        required: [true, 'KYC document (PDF) is required'],
+      },
+      status: {
+        type: String,
+        enum: Object.values(KYC_STATUS),
+        default: KYC_STATUS.PENDING,
+      },
+      rejectionReason: String,
     },
     isApproved: {
       type: Boolean,

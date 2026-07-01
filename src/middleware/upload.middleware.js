@@ -8,7 +8,7 @@ import AppError from '../utils/AppError.js';
 
 const storage = multer.memoryStorage();
 
-const fileFilter = (req, file, cb) => {
+const imageFilter = (req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
   if (allowedMimes.includes(file.mimetype)) {
@@ -18,15 +18,33 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const documentFilter = (req, file, cb) => {
+  if (file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new AppError('Only PDF documents are allowed.', 400), false);
+  }
+};
+
 /**
  * Upload single image.
- * Usage: upload.single('image')
  */
 export const upload = multer({
   storage,
-  fileFilter,
+  fileFilter: imageFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB
+  },
+});
+
+/**
+ * Upload single document (PDF).
+ */
+export const uploadDocument = multer({
+  storage,
+  fileFilter: documentFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB
   },
 });
 
