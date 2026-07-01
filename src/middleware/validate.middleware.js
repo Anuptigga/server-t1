@@ -1,9 +1,3 @@
-/**
- * Generic Zod validation middleware.
- * Validates req.body against the provided schema.
- *
- * Usage: validate(signupSchema)
- */
 const validate = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body);
 

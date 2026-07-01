@@ -28,7 +28,7 @@ const kitchenSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true, // one kitchen per user
+      unique: true,
     },
     name: {
       type: String,
@@ -68,7 +68,7 @@ const kitchenSchema = new mongoose.Schema(
         required: true,
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
         required: true,
       },
     },
@@ -112,15 +112,13 @@ const kitchenSchema = new mongoose.Schema(
   }
 );
 
-// ====================================
+
 // Indexes
-// ====================================
 kitchenSchema.index({ location: '2dsphere' });
 kitchenSchema.index({ isApproved: 1, isOpen: 1 });
 
-// ====================================
+
 // Virtual: is kitchen currently active (visible to buyers)
-// ====================================
 kitchenSchema.virtual('isActive').get(function () {
   return this.isApproved && this.isOpen && !this.isAutoPaused;
 });

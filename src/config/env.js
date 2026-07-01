@@ -15,27 +15,29 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   JWT_EXPIRES_IN: z.string().default('7d'),
 
-  // Twilio (optional in dev)
-  TWILIO_ACCOUNT_SID: z.string().optional().default(''),
-  TWILIO_AUTH_TOKEN: z.string().optional().default(''),
-  TWILIO_PHONE_NUMBER: z.string().optional().default(''),
+  // Twilio
+  TWILIO_ACCOUNT_SID: z.string().min(1, 'TWILIO_ACCOUNT_SID is required'),
+  TWILIO_AUTH_TOKEN: z.string().min(1, 'TWILIO_AUTH_TOKEN is required'),
+  TWILIO_PHONE_NUMBER: z.string().min(1, 'TWILIO_PHONE_NUMBER is required'),
 
-  // Cloudinary (optional in dev)
-  CLOUDINARY_CLOUD_NAME: z.string().optional().default(''),
-  CLOUDINARY_API_KEY: z.string().optional().default(''),
-  CLOUDINARY_API_SECRET: z.string().optional().default(''),
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().min(1, 'CLOUDINARY_CLOUD_NAME is required'),
+  CLOUDINARY_API_KEY: z.string().min(1, 'CLOUDINARY_API_KEY is required'),
+  CLOUDINARY_API_SECRET: z.string().min(1, 'CLOUDINARY_API_SECRET is required'),
 
-  // Razorpay (optional in dev)
-  RAZORPAY_KEY_ID: z.string().optional().default(''),
-  RAZORPAY_KEY_SECRET: z.string().optional().default(''),
-  RAZORPAY_WEBHOOK_SECRET: z.string().optional().default(''),
+  // Razorpay
+  RAZORPAY_KEY_ID: z.string().min(1, 'RAZORPAY_KEY_ID is required'),
+  RAZORPAY_KEY_SECRET: z.string().min(1, 'RAZORPAY_KEY_SECRET is required'),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1, 'RAZORPAY_WEBHOOK_SECRET is required'),
+
+  // RazorpayX (optional — for payouts)
   RAZORPAYX_KEY_ID: z.string().optional().default(''),
   RAZORPAYX_KEY_SECRET: z.string().optional().default(''),
   RAZORPAYX_ACCOUNT_NUMBER: z.string().optional().default(''),
   RAZORPAYX_PAYOUT_MODE: z.enum(['IMPS', 'NEFT', 'RTGS']).default('IMPS'),
 
-  // Google Maps (optional in dev)
-  GOOGLE_MAPS_API_KEY: z.string().optional().default(''),
+  // Google Maps
+  GOOGLE_MAPS_API_KEY: z.string().min(1, 'GOOGLE_MAPS_API_KEY is required'),
 });
 
 const parsed = envSchema.safeParse(process.env);

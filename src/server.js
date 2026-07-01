@@ -10,13 +10,10 @@ import initializeSocket from './config/socket.js';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const startServer = async () => {
-  // Connect to MongoDB
   await connectDB();
-
-  // Create HTTP server
   const server = http.createServer(app);
 
-  // Initialize Socket.IO (events will be added in later stages)
+  // Initialize Socket.IO
   const io = new SocketServer(server, {
     cors: {
       origin: env.CLIENT_URL,
@@ -33,7 +30,7 @@ const startServer = async () => {
   // Start listening
   const PORT = env.PORT;
   server.listen(PORT, () => {
-    logger.info(`🚀 Rajabhoj server running on port ${PORT} [${env.NODE_ENV}]`);
+    logger.info(`Rajabhoj server running on port ${PORT} [${env.NODE_ENV}]`);
   });
 
   // Graceful shutdown

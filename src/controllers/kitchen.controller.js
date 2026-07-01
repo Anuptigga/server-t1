@@ -1,10 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import * as kitchenService from '../services/kitchen.service.js';
 
-/**
- * POST /api/v1/kitchens/register
- * Register a new kitchen (kitchen role only).
- */
+//Register kitchen
 export const registerKitchen = asyncHandler(async (req, res) => {
   const kitchen = await kitchenService.registerKitchen(req.user._id, req.body);
 

@@ -12,10 +12,7 @@ import {
 
 const router = Router();
 
-// ====================================
-// Kitchen owner routes (must be before /:id)
-// ====================================
-
+// Kitchen owner routes
 router.get(
   '/my-menu',
   protect,
@@ -46,17 +43,13 @@ router.post(
   foodController.resetDailyQuantities
 );
 
-// ====================================
+
 // Public routes
-// ====================================
 
 // Get food items for a specific kitchen
 router.get('/kitchen/:kitchenId', foodController.getKitchenFoods);
 
-// ====================================
-// Kitchen owner: single item operations (must be after fixed routes)
-// ====================================
-
+// Kitchen owner: single item operations
 router.put(
   '/:id',
   protect,

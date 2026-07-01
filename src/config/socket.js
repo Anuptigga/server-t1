@@ -63,27 +63,6 @@ export default function initializeSocket(io) {
     });
 
     // ====================================
-    // Delivery location tracking
-    // ====================================
-
-    /**
-     * Delivery partner broadcasts location update.
-     * Emitted to the order room so buyer can see live location.
-     */
-    socket.on('delivery:location', (data) => {
-      const { orderId, latitude, longitude } = data || {};
-      if (!orderId || !latitude || !longitude) return;
-
-      // Broadcast to everyone tracking this order
-      socket.to(`order:${orderId}`).emit('delivery:location', {
-        orderId,
-        latitude,
-        longitude,
-        timestamp: Date.now(),
-      });
-    });
-
-    // ====================================
     // Disconnect
     // ====================================
     socket.on('disconnect', () => {

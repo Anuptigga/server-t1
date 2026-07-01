@@ -10,17 +10,10 @@ import {
 
 const router = Router();
 
-// ====================================
-// Public routes (no auth needed)
-// ====================================
-
 // Nearby kitchens (buyer browsing)
 router.get('/nearby', kitchenController.getNearbyKitchens);
 
-// ====================================
-// Kitchen owner routes (must be before /:id)
-// ====================================
-
+// Kitchen owner routes
 router.post(
   '/register',
   protect,
@@ -51,10 +44,7 @@ router.patch(
   kitchenController.toggleStatus
 );
 
-// ====================================
 // Admin routes
-// ====================================
-
 router.get(
   '/',
   protect,
@@ -76,9 +66,7 @@ router.patch(
   kitchenController.rejectKitchen
 );
 
-// ====================================
-// Public: Single kitchen detail (MUST be last — /:id is a catch-all pattern)
-// ====================================
+// Public
 router.get('/:id', kitchenController.getKitchenById);
 
 export default router;

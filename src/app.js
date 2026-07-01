@@ -36,14 +36,11 @@ app.get('/api/v1/build-indexes', async (req, res) => {
   }
 });
 
-// ====================================
+
 // Security middleware
-// ====================================
 app.use(helmet());
 app.use(
   cors({
-    // Setting origin to true reflects the request origin, allowing all domains 
-    // while still supporting credentials (cookies/sessions)
     origin: true,
     credentials: true,
   })
@@ -56,28 +53,21 @@ app.post(
   handleRazorpayWebhook
 );
 
-// ====================================
 // Body parsing
-// ====================================
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// ====================================
+
 // Logging
-// ====================================
 if (env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// ====================================
-// Rate limiting (general)
-// ====================================
+// Rate limiting
 app.use('/api', generalLimiter);
 
-// ====================================
 // Health check
-// ====================================
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -87,9 +77,7 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
-// ====================================
 // API routes
-// ====================================
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/kitchens', kitchenRoutes);
 app.use('/api/v1/users', userRoutes);
@@ -101,16 +89,13 @@ app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
-// ====================================
+
 // 404 handler
-// ====================================
 app.all('*', (req, res, next) => {
   next(new AppError(`Route ${req.originalUrl} not found`, 404));
 });
 
-// ====================================
 // Global error handler
-// ====================================
 app.use(errorHandler);
 
 export default app;

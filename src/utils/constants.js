@@ -1,7 +1,3 @@
-// ====================================
-// Application-wide constants & enums
-// ====================================
-
 export const ROLES = {
   BUYER: 'buyer',
   KITCHEN: 'kitchen',

@@ -4,9 +4,8 @@ import AppError from '../utils/AppError.js';
 import { PLATFORM_CONFIG, ROLES } from '../utils/constants.js';
 import { geocodeAddress } from './geocoding.service.js';
 
-/**
- * Register a new kitchen for the authenticated user.
- */
+//Register a new kitchen for the authenticated user.
+
 export const registerKitchen = async (userId, data) => {
   // Check if user already has a kitchen
   const existing = await Kitchen.findOne({ owner: userId });

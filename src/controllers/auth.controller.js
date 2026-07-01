@@ -1,6 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import * as authService from '../services/auth.service.js';
-import { setTokenCookie, clearTokenCookie } from '../utils/helpers.js';
+
 
 /**
  * POST /api/v1/auth/signup
@@ -8,8 +8,6 @@ import { setTokenCookie, clearTokenCookie } from '../utils/helpers.js';
  */
 export const signup = asyncHandler(async (req, res) => {
   const { user, token } = await authService.signup(req.body);
-
-  setTokenCookie(res, token);
 
   res.status(201).json({
     status: 'success',
@@ -25,8 +23,6 @@ export const signup = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { user, token } = await authService.login(req.body);
 
-  setTokenCookie(res, token);
-
   res.status(200).json({
     status: 'success',
     message: 'Logged in successfully',
@@ -39,8 +35,6 @@ export const login = asyncHandler(async (req, res) => {
  * Clear authentication cookie.
  */
 export const logout = asyncHandler(async (req, res) => {
-  clearTokenCookie(res);
-
   res.status(200).json({
     status: 'success',
     message: 'Logged out successfully',
@@ -66,8 +60,6 @@ export const sendOtp = asyncHandler(async (req, res) => {
  */
 export const verifyOtp = asyncHandler(async (req, res) => {
   const { user, token } = await authService.verifyOtp(req.body);
-
-  setTokenCookie(res, token);
 
   res.status(200).json({
     status: 'success',

@@ -26,7 +26,7 @@ export const geocodeAddress = async (address) => {
     }
 
     const { lng, lat } = data.results[0].geometry.location;
-    logger.info(`📍 [GEOCODE] ${addressString} → [${lng}, ${lat}]`);
+    logger.info(`[GEOCODE] ${addressString} → [${lng}, ${lat}]`);
 
     return [lng, lat];
   } catch (error) {
