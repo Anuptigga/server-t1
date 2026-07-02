@@ -14,10 +14,6 @@ const router = Router();
 // All order routes require authentication
 router.use(protect);
 
-// ====================================
-// Fixed routes (before /:id)
-// ====================================
-
 // Buyer: get my orders
 router.get('/my-orders', authorize('buyer'), orderController.getMyOrders);
 

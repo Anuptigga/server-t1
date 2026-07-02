@@ -78,6 +78,12 @@ const userSchema = new mongoose.Schema(
         type: [Number], // [longitude, latitude]
       },
     },
+    defaultAddress: {
+      street: { type: String, trim: true, default: '' },
+      city: { type: String, trim: true, default: '' },
+      state: { type: String, trim: true, default: '' },
+      pincode: { type: String, trim: true, default: '' },
+    },
     isActive: {
       type: Boolean,
       default: true,

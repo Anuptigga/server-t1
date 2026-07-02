@@ -23,6 +23,9 @@ router.get('/active', deliveryController.getActiveDelivery);
 // Accept order
 router.post('/accept/:orderId', deliveryController.acceptDelivery);
 
+// Mark picked up
+router.post('/pickup/:orderId', deliveryController.markPickedUp);
+
 // Mark delivered
 router.post('/deliver/:orderId', deliveryController.markDelivered);
 

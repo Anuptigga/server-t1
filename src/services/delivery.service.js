@@ -93,6 +93,31 @@ export const acceptDelivery = async (userId, orderId) => {
     },
     {
       deliveryPartner: userId,
+      // Leave status as READY until the driver actually picks it up at the kitchen
+    },
+    { new: true }
+  )
+    .populate('kitchen', 'name address phone')
+    .populate('buyer', 'name phone');
+
+  if (!order) {
+    throw new AppError('Order is no longer available for pickup.', 409);
+  }
+
+  return order;
+};
+
+/**
+ * Mark order as picked up by the delivery partner.
+ */
+export const markPickedUp = async (userId, orderId) => {
+  const order = await Order.findOneAndUpdate(
+    {
+      _id: orderId,
+      deliveryPartner: userId,
+      status: ORDER_STATUS.READY, // must be accepted by them and ready
+    },
+    {
       status: ORDER_STATUS.PICKED_UP,
       pickedUpAt: new Date(),
     },
@@ -102,7 +127,7 @@ export const acceptDelivery = async (userId, orderId) => {
     .populate('buyer', 'name phone');
 
   if (!order) {
-    throw new AppError('Order is no longer available for pickup.', 409);
+    throw new AppError('Order not found or not assigned to you.', 404);
   }
 
   return order;
@@ -145,7 +170,7 @@ export const markDelivered = async (userId, orderId, otp) => {
 export const getActiveDelivery = async (userId) => {
   const order = await Order.findOne({
     deliveryPartner: userId,
-    status: { $in: [ORDER_STATUS.PICKED_UP] },
+    status: { $in: [ORDER_STATUS.READY, ORDER_STATUS.PICKED_UP] },
   })
     .populate('kitchen', 'name address phone coverImage')
     .populate('buyer', 'name phone');

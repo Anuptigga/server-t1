@@ -7,7 +7,7 @@ import AppError from '../utils/AppError.js';
  * Update the authenticated user's GPS location.
  */
 export const updateLocation = asyncHandler(async (req, res) => {
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude, street, city, state, pincode } = req.body;
 
   if (!latitude || !longitude) {
     throw new AppError('Latitude and longitude are required.', 400);
@@ -20,6 +20,12 @@ export const updateLocation = asyncHandler(async (req, res) => {
         type: 'Point',
         coordinates: [parseFloat(longitude), parseFloat(latitude)],
       },
+      defaultAddress: {
+        street: street || '',
+        city: city || '',
+        state: state || '',
+        pincode: pincode || '',
+      }
     },
     { new: true, runValidators: true }
   ).select('-password -otp -__v');

@@ -94,6 +94,37 @@ export const acceptDelivery = asyncHandler(async (req, res) => {
 });
 
 /**
+ * POST /api/v1/delivery/pickup/:orderId
+ * Mark order as picked up from kitchen.
+ */
+export const markPickedUp = asyncHandler(async (req, res) => {
+  const order = await deliveryService.markPickedUp(
+    req.user._id,
+    req.params.orderId
+  );
+
+  // Notify buyer
+  const io = req.app.get('io');
+  if (io) {
+    io.to(`order:${order._id}`).emit('order:status', {
+      orderId: order._id,
+      status: order.status,
+    });
+    io.to(`user:${order.buyer._id || order.buyer}`).emit('order:status', {
+      orderId: order._id,
+      status: order.status,
+      message: 'Your order has been picked up and is on the way!',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Order marked as picked up.',
+    data: { order },
+  });
+});
+
+/**
  * POST /api/v1/delivery/deliver/:orderId
  * Mark order as delivered.
  */
