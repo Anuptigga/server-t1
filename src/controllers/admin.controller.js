@@ -18,13 +18,13 @@ export const getKitchens = asyncHandler(async (req, res) => {
 
 export const moderateKitchen = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { isApproved } = req.body;
-  const kitchen = await adminService.moderateKitchen(id, { isApproved });
+  const { isApproved, reason } = req.body;
+  const result = await adminService.moderateKitchen(id, { isApproved, reason });
   
   res.status(200).json({
     status: 'success',
-    message: isApproved ? 'Kitchen approved successfully' : 'Kitchen rejected',
-    data: { kitchen },
+    message: isApproved ? 'Kitchen approved successfully' : 'Kitchen rejected and deleted',
+    data: { kitchen: result },
   });
 });
 

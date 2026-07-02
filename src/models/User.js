@@ -84,6 +84,10 @@ const userSchema = new mongoose.Schema(
       state: { type: String, trim: true, default: '' },
       pincode: { type: String, trim: true, default: '' },
     },
+    kitchenRejection: {
+      reason: { type: String, default: '' },
+      rejectedAt: { type: Date },
+    },
     isActive: {
       type: Boolean,
       default: true,

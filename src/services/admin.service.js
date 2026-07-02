@@ -88,18 +88,34 @@ export const getKitchens = async ({ page = 1, limit = 10, status }) => {
 
 /**
  * Approve or reject a kitchen.
+ * On rejection: save reason on the User, delete the Kitchen + its Food items.
  */
-export const moderateKitchen = async (kitchenId, { isApproved }) => {
-  const kitchen = await Kitchen.findByIdAndUpdate(
-    kitchenId,
-    { isApproved },
-    { new: true }
-  ).populate('owner', 'name email');
-
+export const moderateKitchen = async (kitchenId, { isApproved, reason }) => {
+  const kitchen = await Kitchen.findById(kitchenId).populate('owner', 'name email');
   if (!kitchen) throw new AppError('Kitchen not found', 404);
 
-  // You could also trigger an email notification here in a real app
-  return kitchen;
+  if (isApproved) {
+    kitchen.isApproved = true;
+    await kitchen.save();
+    return kitchen;
+  }
+
+  // Rejection flow: save reason on User, then delete Kitchen + Food items
+  await User.findByIdAndUpdate(kitchen.owner._id, {
+    kitchenRejection: {
+      reason: reason || 'No reason provided',
+      rejectedAt: new Date(),
+    },
+  });
+
+  // Delete all food items for this kitchen
+  const Food = (await import('../models/Food.js')).default;
+  await Food.deleteMany({ kitchen: kitchen._id });
+
+  // Delete the kitchen document itself
+  await Kitchen.findByIdAndDelete(kitchenId);
+
+  return { deleted: true, name: kitchen.name, ownerEmail: kitchen.owner?.email };
 };
 
 /**

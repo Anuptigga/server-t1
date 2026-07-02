@@ -1,5 +1,6 @@
 import Food from '../models/Food.js';
 import Kitchen from '../models/Kitchen.js';
+import mongoose from 'mongoose';
 import AppError from '../utils/AppError.js';
 
 /**
@@ -175,7 +176,7 @@ export const incrementQuantity = async (foodId, quantity = 1) => {
 export const resetDailyQuantities = async (kitchenId, items) => {
   const bulkOps = items.map((item) => ({
     updateOne: {
-      filter: { _id: item.foodId, kitchen: kitchenId },
+      filter: { _id: new mongoose.Types.ObjectId(item.foodId), kitchen: kitchenId },
       update: {
         $set: {
           totalQuantity: item.totalQuantity,
